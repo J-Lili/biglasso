@@ -47,7 +47,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
-  int nsample = 10000;
+  int nsample = n;
   int j, jj, violations = 0;
 #pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -67,7 +67,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       double variance=sqr_sum/nsample-sum/nsample*sum/nsample;
       
-      if (j==1) Rprintf("lambda, var, mean %d% d %d",l1,sqrt(variance) / nsample, (z[j]-a[j] * l2));
+      if (j==17) Rprintf("lambda, var, mean %d% d %d",l1,sqrt(variance) / nsample, (z[j]-a[j] * l2));
       if (is_hypothesis_accepted(l1, sqrt(variance) / nsample, (z[j]-a[j] * l2), 0.01)) {
         steps.push_back(n);
         sum = 0.0;
@@ -79,7 +79,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           violations++;
         }
       }
-      else steps.push_back(nsample);
+      else steps.push_back(0);
       
     }
   }
