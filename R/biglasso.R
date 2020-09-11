@@ -171,7 +171,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                                 "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"),
                      safe.thresh = 0, recal.thresh = 1, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
-                     nlambda = 100, lambda.log.scale = TRUE,
+                     nlambda = 10, lambda.log.scale = TRUE,
                      lambda, eps = 1e-7, max.iter = 1000, 
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)),
@@ -179,7 +179,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      warn = TRUE, output.time = FALSE,
                      return.time = TRUE,
                      verbose = FALSE) {
-
+  print("Success in modifying R")
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
@@ -249,6 +249,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
+  screen <- "None"
   if (family == 'gaussian') {
     time <- system.time(
       {
