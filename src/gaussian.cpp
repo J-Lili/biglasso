@@ -255,13 +255,14 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         break;
       }
     }
-    int steps_sum = 0;
-    for (int i = 0 ; i < steps.size(); i++) {
-      steps_sum += steps[i];
-    }
-    Rprintf("\n Avg steps: %d\n", ((double)steps_sum)/steps.size());
   }
   
+  int steps_sum = 0;
+    for (int i = 0 ; i < steps.size(); i++) {
+      steps_sum += steps[i];
+  }
+  Rprintf("\n Avg steps: %d\n", ((double)steps_sum)/steps.size());
+
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
