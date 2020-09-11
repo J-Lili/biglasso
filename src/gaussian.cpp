@@ -67,7 +67,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       double variance=sqr_sum/nsample-sum/nsample*sum/nsample;
       
-      if (is_hypothesis_accepted(lambda, sqrt(variance) / nsample, (z[j]-a[j] * l2), 0.01)) {
+      if (is_hypothesis_accepted(l1, sqrt(variance) / nsample, (z[j]-a[j] * l2), 0.01)) {
         steps.push_back(n);
         sum = 0.0;
         for (int i=0; i < n; i++) {
