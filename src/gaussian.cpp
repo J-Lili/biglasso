@@ -74,6 +74,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
+        z[j] = (sum * n / nsample - center[jj] * sumResid) / (scale[jj] * n);
         if (fabs(z[j] - a[j] * l2) > l1) {
           e1[j] = 1;
           violations++;
