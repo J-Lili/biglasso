@@ -43,13 +43,13 @@ bool is_hypothesis_accepted (double lambda,double sample_var, double mean, doubl
 // check KKT conditions over features in the rest set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, vector<int> steps) {
-  
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum) {
+  Rprintf("lambda, steps,stepsum %f %f %f \n",lambda,steps, stepsum);
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
   int nsample = n;
   int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0) {
       jj = col_idx[j];
@@ -67,9 +67,10 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       double variance=sqr_sum/nsample-sum/nsample*sum/nsample;
       
-      if (j==17) Rprintf("lambda, l1, var, mean %d% d %d %d\n",lambda,l1,sqrt(variance) / nsample, (z[j]-a[j] * l2), sum);
+      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(variance) / nsample, (z[j]-a[j] * l2), sum);
       if (is_hypothesis_accepted(l1, sqrt(variance) / nsample, (z[j]-a[j] * l2), 0.01)) {
-        steps.push_back(n);
+        stepsum += n;
+        steps++;
         sum = 0.0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
@@ -80,8 +81,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           violations++;
         }
       }
-      else steps.push_back(0);
-      
+      else steps++;
     }
   }
   return violations;
@@ -172,7 +172,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
-  vector<int> steps; //Beta from previous iteration
+  int steps = 0, stepsum = 0; 
   
   // set up lambda
   if (user == 0) {
@@ -251,7 +251,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, stepsum, steps); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
@@ -259,13 +259,10 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   }
   
-  int steps_sum = 0;
-    for (int i = 0 ; i < steps.size(); i++) {
-      steps_sum += steps[i];
-  }
-  Rprintf("\n Avg steps: %d\n", ((double)steps_sum)/steps.size());
+  Rprintf("\n Avg steps: %f %d %d\n", ((double)stepsum)/steps, steps,stepsum);
 
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
+
 
