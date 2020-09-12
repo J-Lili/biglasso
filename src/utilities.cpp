@@ -139,7 +139,7 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
   return sum;
 }
 
-// update residul vector
+// update residual vector
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                                double center_, double scale_, int n_row, int j, double *r_diff) {
   MatrixAccessor<double> xAcc(*xpMat);
