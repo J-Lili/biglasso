@@ -255,7 +255,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, stepsum, steps); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
