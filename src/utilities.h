@@ -65,6 +65,10 @@ double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
 double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                        double center_, double scale_, int n_row, int j);
 
+//crossprod_resid_diff- as above, but keeping track of difference
+double crossprod_resid_diff(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
+                       double center_, double scale_, int n_row, int j, double *r_diff);
+
 // update residul vector if variable j enters eligible set
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   double center_, double scale_, int n_row, int j, double *r_diff);

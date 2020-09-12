@@ -141,7 +141,17 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 
 // update residual vector
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
-                               double center_, double scale_, int n_row, int j, double *r_diff) {
+                  double center_, double scale_, int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  for (int i=0; i < n_row; i++) {
+    r[i] -= shift * (xCol[row_idx_[i]] - center_) / scale_;
+  }
+}
+
+// update residual vector while 
+void update_resid_diff(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
+                  double center_, double scale_, int n_row, int j, double *r_diff) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   for (int i=0; i < n_row; i++) {
