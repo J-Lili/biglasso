@@ -74,8 +74,8 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       var[j] += variance / nsample;
       z_prev[j] = z_prev[j] - sum / current_scale;
       
-      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2), sum);
-      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
+      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
+      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
@@ -184,7 +184,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double *z_prev = Calloc(p, double);
   double *var = Calloc(p, double);
 
-  for (i = 0; i < p; i++) var[i] = 10000000;
+  for (i = 0; i < p; i++) var[i] = -1;
   
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
