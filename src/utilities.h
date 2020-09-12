@@ -67,7 +67,7 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 
 // update residul vector if variable j enters eligible set
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
-                  double center_, double scale_, int n_row, int j);
+                  double center_, double scale_, int n_row, int j, double *r_diff);
 
 // Sum of squares of jth column of X
 double sqsum_bm(SEXP xP, int n_row, int j, int useCores);
