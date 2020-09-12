@@ -77,7 +77,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       if (j==17) Rprintf("sum, sqrsum, l1, var, mean %f %f - %f %f %f\n",sum,sqr_sum,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
       if (j==17) Rprintf(" %f %f\n",r[1],r_diff[1]);
       
-      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
+      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
@@ -186,9 +186,10 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double *z_prev = Calloc(p, double);
   double *var = Calloc(p, double);
 
-  for (i = 0; i < p; i++) var[i] = -1;
-  
   for (i = 0; i < n; i++) r[i] = y[i];
+  for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
+  
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
@@ -245,8 +246,6 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         //solve lasso over ever-active set
         max_update = 0.0;              
         
-        for (int i = 0; i < n; i++) r_diff[i] = 0;
-
         for (j = 0; j < p; j++) {
           if (e1[j]) {
             jj = col_idx[j];
@@ -281,6 +280,8 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         loss[l] = gLoss(r, n);
         break;
       }
+      for (int i = 0; i < n; i++) r_diff[i] = 0;
+      
     }
   }
   
