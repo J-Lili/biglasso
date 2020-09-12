@@ -105,7 +105,6 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
                                SEXP alpha_, SEXP user_, SEXP eps_, 
                                SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                SEXP ncore_, SEXP verbose_) {
-  Rprintf("Success in modifying code\n");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -185,7 +184,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double *z_prev = Calloc(p, double);
   double *var = Calloc(p, double);
 
-  for (i = 0; i < n; i++) var[i] = 10000000;
+  for (i = 0; i < p; i++) var[i] = 10000000;
   
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
