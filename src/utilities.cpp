@@ -155,7 +155,7 @@ void update_resid_diff(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   for (int i=0; i < n_row; i++) {
-    r_diff[i] = shift * (xCol[row_idx_[i]] - center_) / scale_;
+    r_diff[i] += shift * (xCol[row_idx_[i]] - center_) / scale_;
     r[i] -= r_diff[i];
   }
 }
