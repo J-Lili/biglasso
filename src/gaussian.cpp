@@ -171,6 +171,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart;
   int *e1 = Calloc(p, int); // ever active set
+  double *r_diff = Calloc(n, double);
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -244,7 +245,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
               if (update > max_update) {
                 max_update = update;
               }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
