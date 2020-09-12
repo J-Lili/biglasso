@@ -74,7 +74,9 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       var[j] += variance / nsample;
       z_prev[j] = z_prev[j] - sum / current_scale;
       
-      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
+      if (j==17) Rprintf("sum, sqrsum, l1, var, mean %f %f - %f %f %f\n",sum,sqr_sum,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
+      if (j==17) Rprintf(" %f %f\n",r[1],r_diff[1]);
+      
       if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
