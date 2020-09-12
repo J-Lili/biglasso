@@ -43,7 +43,8 @@ bool is_hypothesis_accepted (double lambda,double sample_var, double mean, doubl
 // check KKT conditions over features in the rest set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum) {
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
+                       double *r_diff, double *z_prev, double *var) {
   Rprintf("lambda, steps,stepsum %f %d %d \n",lambda,steps, stepsum);
 
   MatrixAccessor<double> xAcc(*xpMat);
@@ -58,26 +59,32 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sum = 0.0;
       sqr_sum = 0.0;
       for (int i=0; i < nsample; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-        sqr_sum = sqr_sum + (xCol[row_idx[i]] * r[i]) * (xCol[row_idx[i]] * r[i]);
+        double current_sample = xCol[row_idx[i]] * r_diff[i];
+        sum = sum + current_sample;
+        sqr_sum = sqr_sum + current_sample * current_sample;
       }
-      z[j] = (sum * n / nsample - center[jj] * sumResid) / (scale[jj] * n);
+      
+      double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
       
-      double variance=sqr_sum/nsample-sum/nsample*sum/nsample;
+      double variance= (sqr_sum/nsample-sum/nsample*sum/nsample) / (current_scale * current_scale);
       
-      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(variance) / nsample, (z[j]-a[j] * l2), sum);
-      if (is_hypothesis_accepted(l1, sqrt(variance) / nsample, (z[j]-a[j] * l2), 0.01)) {
+      var[j] += variance / nsample;
+      z_prev[j] = z_prev[j] - sum / current_scale;
+      
+      if (j==17) Rprintf("lambda, l1, var, mean %f %f %f %f\n",lambda,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2), sum);
+      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        z[j] = (sum * n / nsample - center[jj] * sumResid) / (scale[jj] * n);
-        if (fabs(z[j] - a[j] * l2) > l1) {
+        z_prev[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        var[j] = 0;
+        if (fabs(z_prev[j] - a[j] * l2) > l1) {
           e1[j] = 1;
           violations++;
         }
@@ -171,8 +178,15 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart;
   int *e1 = Calloc(p, int); // ever active set
-  double *r_diff = Calloc(n, double);
   double *r = Calloc(n, double);
+  
+  // hypothesis testing, differencing
+  double *r_diff = Calloc(n, double);
+  double *z_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
+
+  for (i = 0; i < n; i++) var[i] = 10000000;
+  
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
@@ -256,7 +270,8 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
+                                      r_diff, z_prev, var); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
