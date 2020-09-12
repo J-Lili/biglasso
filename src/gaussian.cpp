@@ -259,7 +259,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
               if (update > max_update) {
                 max_update = update;
               }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
+              update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
