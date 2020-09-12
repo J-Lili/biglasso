@@ -245,8 +245,6 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         //solve lasso over ever-active set
         max_update = 0.0;              
         
-        for (int i = 0; i < n; i++) r_diff[i] = 0;
-
         for (j = 0; j < p; j++) {
           if (e1[j]) {
             jj = col_idx[j];
@@ -281,6 +279,8 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         loss[l] = gLoss(r, n);
         break;
       }
+      for (int i = 0; i < n; i++) r_diff[i] = 0;
+      
     }
   }
   
