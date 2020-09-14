@@ -1,4 +1,5 @@
 #include "utilities.h"
+#include <vector>
 
 void Free_memo(double *a, double *r, int *e1) {
   Free(a);
@@ -6,30 +7,92 @@ void Free_memo(double *a, double *r, int *e1) {
   Free(e1);
 }
 
+
+#ifndef Pi 
+#define Pi 3.141592653589793238463
+#endif 
+
+
+double pnorm(double x, double mean, double std_dev) {
+  double const a1 = 0.31938153, a2 = -0.356563782, a3 = 1.781477937;
+  double const a4 = -1.821255978, a5 = 1.330274429;
+  
+  double x_abs = fabs(x);
+  double K = 1.0 / (1.0 + 0.2316419 * x_abs);
+  double w = 1.0 - 1.0 / sqrt(2 * Pi) * exp(- x_abs * x_abs / 2) * (a1 * K + a2 * K * K + a3 * pow(K,3) + a4 * pow(K,4) + a5 * pow(K,5));
+  
+  if (x < 0 ){
+    w= 1.0 - w;
+  }
+  return w;
+}
+
+
+// true if hypothesis is accepted, false if not
+// hypothesis: sampling a distribution with mean more extreme than lambda 
+// (<-[lambda], >[lambda]), variance [sample_var] we got [mean]
+bool is_hypothesis_accepted (double lambda,double sample_var, double mean, double alpha) {
+  if (lambda<=abs(mean)) return true;
+  double p_value = pnorm(abs(mean),lambda,sqrt(sample_var))-pnorm(-abs(mean),lambda,sqrt(sample_var));
+  return (p_value>alpha);
+}
+
+
+
 // check KKT conditions over features in the rest set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
+                       double *r_diff, double *z_prev, double *var) {
+  Rprintf("lambda, steps,stepsum %f %d %d \n",lambda,steps, stepsum);
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol, sum, sqr_sum, l1, l2;
+  int nsample = 10000;
   int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+#pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
+      sqr_sum = 0.0;
+      for (int i=0; i < nsample; i++) {
+        double current_sample = xCol[row_idx[i]] * r_diff[i];
+        sum = sum + current_sample;
+        sqr_sum = sqr_sum + current_sample * current_sample;
       }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
+      double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        e1[j] = 1;
-        violations++;
+      
+      double variance= (sqr_sum/nsample-sum/nsample*sum/nsample) / (current_scale * current_scale);
+      
+      var[j] += variance / nsample;
+      z_prev[j] = z_prev[j] - sum / current_scale;
+      
+      if (j==17) Rprintf("sum, sqrsum, l1, var, mean %f %f - %f %f %f\n",sum,sqr_sum,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
+      if (j==17) Rprintf(" %f %f\n",r[1],r_diff[1]);
+      
+      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
+        stepsum += n;
+        steps++;
+        sum = 0.0;
+        for (int i=0; i < n; i++) {
+          sum = sum + xCol[row_idx[i]] * r[i];
+        }
+        z_prev[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        var[j] = 0;
+        if (fabs(z_prev[j] - a[j] * l2) > l1) {
+          e1[j] = 1;
+          violations++;
+        }
+      }
+      else {
+        steps++;
+        stepsum += nsample;
       }
     }
   }
