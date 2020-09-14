@@ -55,13 +55,14 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       xCol = xAcc[jj];
       sum = 0.0;
       sqr_sum = 0.0;
+      Rprintf("%f ",r_diff[1]);
       for (int i=0; i < nsample; i++) {
         double current_sample = xCol[row_idx[i]] * r_diff[i];
         r_diff[i] = 0;
         sum = sum + current_sample;
         sqr_sum = sqr_sum + current_sample * current_sample;
       }
-      
+      Rprintf("%f \n",sum);
       double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
