@@ -262,10 +262,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
                 max_update = update;
               }
               
-              Rprintf("will update r, rdiff %f %f\n",r[1], r_diff[1]);
               update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
-              Rprintf("updated r, rdiff %f %f\n",r[1], r_diff[1]);
-              
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
@@ -276,7 +273,8 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
+                                      r_diff, z_prev, var); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
