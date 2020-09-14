@@ -81,7 +81,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           sum = sum + xCol[row_idx[i]] * r[i];
         }
         // Expected not to be the same because sumResid not handled, unless center[jj] is 0
-        if (j==17) Rprintf("estimation, real %f %f\n",z_prev[j],sum - center[jj] * sumResid);
+        if (j==17) Rprintf("estimation, real %f %f\n",(sum - center[jj] * sumResid) / current_scale);
         z_prev[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         if (fabs(z_prev[j] - a[j] * l2) > l1) {
