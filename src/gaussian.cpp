@@ -73,15 +73,14 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sum_prev[j] = sum_prev[j] - sum ;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       
-      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
+      if (true) {//var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (fabs(sum_prev[j]-sum)>0.000001) Rprintf("estimation, real %f %f %f\n",sum_prev[j], sum, lambda);
-        else Rprintf(".");
+        Rprintf("estimation, real %f %f %f\n",sum_prev[j], sum, lambda);
         sum_prev[j] = sum;
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
