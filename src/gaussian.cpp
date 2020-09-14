@@ -43,7 +43,7 @@ bool is_hypothesis_accepted (double lambda,double sample_var, double mean, doubl
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
-                       double *r_diff, double *z_prev, double *var) {
+                       double *r_diff, double *sum_prev, double *var) {
   Rprintf("lambda, steps,stepsum %f %d %d \n",lambda,steps, stepsum);
   
   MatrixAccessor<double> xAcc(*xpMat);
@@ -71,9 +71,10 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       double variance= (sqr_sum/nsample-sum/nsample*sum/nsample) / (current_scale * current_scale);
       
       var[j] += variance / nsample;
-      z_prev[j] = z_prev[j] - sum / current_scale;
-
-      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
+      sum_prev[j] = sum_prev[j] - sum ;
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+      
+      if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
@@ -81,10 +82,11 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           sum = sum + xCol[row_idx[i]] * r[i];
         }
         // Expected not to be the same because sumResid not handled, unless center[jj] is 0
-        if (j==17) Rprintf("estimation, real %f %f\n",(sum - center[jj] * sumResid) / current_scale);
-        z_prev[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        if (j==17) Rprintf("estimation, real %f %f\n",sum_prev[j], sum);
+        sum_prev[j] = sum;
+        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
-        if (fabs(z_prev[j] - a[j] * l2) > l1) {
+        if (fabs(z[j] - a[j] * l2) > l1) {
           e1[j] = 1;
           violations++;
         }
