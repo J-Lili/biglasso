@@ -57,6 +57,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sqr_sum = 0.0;
       for (int i=0; i < nsample; i++) {
         double current_sample = xCol[row_idx[i]] * r_diff[i];
+        r_diff[i] = 0;
         sum = sum + current_sample;
         sqr_sum = sqr_sum + current_sample * current_sample;
       }
@@ -79,7 +80,6 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        // Expected not to be the same because sumResid not handled, unless center[jj] is 0
         if (j==17) Rprintf("estimation, real %f %f\n",sum_prev[j], sum);
         sum_prev[j] = sum;
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
@@ -278,8 +278,6 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         loss[l] = gLoss(r, n);
         break;
       }
-      for (int i = 0; i < n; i++) r_diff[i] = 0;
-      
     }
   }
   
