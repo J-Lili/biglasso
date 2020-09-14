@@ -73,7 +73,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sum_prev[j] = sum_prev[j] - sum ;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       
-      if (true) { //is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
+      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
@@ -185,6 +185,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   double *z_prev = Calloc(p, double);
   double *var = Calloc(p, double);
   
+  for (int i = 0; i < p; i++) var[i] = -1;
   for (i = 0; i < n; i++) r[i] = y[i];
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
   
