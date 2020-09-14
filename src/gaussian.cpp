@@ -58,7 +58,6 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       Rprintf("%f ",r_diff[1]);
       for (int i=0; i < nsample; i++) {
         double current_sample = xCol[row_idx[i]] * r_diff[i];
-        r_diff[i] = 0;
         sum = sum + current_sample;
         sqr_sum = sqr_sum + current_sample * current_sample;
       }
@@ -96,6 +95,9 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       }
     }
   }
+  
+  for (int i = 0; i < n ; i++) r_diff[i] = 0;
+
   return violations;
 }
 
