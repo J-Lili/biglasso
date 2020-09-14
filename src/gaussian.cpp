@@ -46,7 +46,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
                        double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
-  int nsample = n;
+  int nsample = 10000;
   int j, jj, violations = 0;
 #pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -55,13 +55,11 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       xCol = xAcc[jj];
       sum = 0.0;
       sqr_sum = 0.0;
-      Rprintf("%f ",r_diff[1]);
       for (int i=0; i < nsample; i++) {
         double current_sample = xCol[row_idx[i]] * r_diff[i];
         sum = sum + current_sample;
         sqr_sum = sqr_sum + current_sample * current_sample;
       }
-      Rprintf("%f \n",sum);
       double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
@@ -70,10 +68,10 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       double variance= (sqr_sum/nsample-sum/nsample*sum/nsample) / (current_scale * current_scale);
       
       var[j] += variance / nsample;
-      sum_prev[j] = sum_prev[j] - sum ;
+      sum_prev[j] = sum_prev[j] - sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       
-      if (true) {//var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
+      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
