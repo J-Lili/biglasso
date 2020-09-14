@@ -80,7 +80,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (j==17) Rprintf("estimation, real %f %f\n",sum_prev[j], sum);
+        if (j==2) Rprintf("estimation, real %f %f\n",sum_prev[j], sum);
         sum_prev[j] = sum;
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
