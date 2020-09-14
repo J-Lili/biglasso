@@ -44,8 +44,6 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
                        double *r_diff, double *sum_prev, double *var) {
-  Rprintf("lambda, steps,stepsum %f %d %d \n",lambda,steps, stepsum);
-  
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
   int nsample = n;
