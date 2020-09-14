@@ -46,7 +46,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
                        double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
-  int nsample = 10000;
+  int nsample = 20000;
   int j, jj, violations = 0;
 #pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
