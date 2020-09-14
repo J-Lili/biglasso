@@ -81,6 +81,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           sum = sum + xCol[row_idx[i]] * r[i];
         }
         if (fabs(sum_prev[j]-sum)>0.000001) Rprintf("estimation, real %f %f %f\n",sum_prev[j], sum, lambda);
+        else Rprintf(".");
         sum_prev[j] = sum;
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
