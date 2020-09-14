@@ -69,9 +69,9 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       var[j] += variance / nsample;
       sum_prev[j] = sum_prev[j] - sum * n / nsample;
-      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
       
-      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j]) , (z[j]-a[j] * l2), 0.01)) {
+      if (var[j]==-1 || is_hypothesis_accepted(l1, sqrt(var[j])/current_scale , (z[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
