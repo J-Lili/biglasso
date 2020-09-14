@@ -48,7 +48,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
-  int nsample = 10000;
+  int nsample = n;
   int j, jj, violations = 0;
 #pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -72,10 +72,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       var[j] += variance / nsample;
       z_prev[j] = z_prev[j] - sum / current_scale;
-      
-      if (j==17) Rprintf("sum, sqrsum, l1, var, mean %f %f - %f %f %f\n",sum,sqr_sum,l1,sqrt(var[j]), (z_prev[j]-a[j] * l2));
-      if (j==17) Rprintf(" %f %f\n",r[1],r_diff[1]);
-      
+
       if (is_hypothesis_accepted(l1, sqrt(var[j]) , (z_prev[j]-a[j] * l2), 0.01)) {
         stepsum += n;
         steps++;
@@ -83,6 +80,8 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
+        // Expected not to be the same because sumResid not handled, unless center[jj] is 0
+        if (j==17) Rprintf("estimation, real %f %f\n",z_prev[j],sum - center[jj] * sumResid)
         z_prev[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         if (fabs(z_prev[j] - a[j] * l2) > l1) {
