@@ -17,11 +17,11 @@ double pnorm(double x, double mean, double std_dev) {
   double const a1 = 0.31938153, a2 = -0.356563782, a3 = 1.781477937;
   double const a4 = -1.821255978, a5 = 1.330274429;
   
-  double x_abs = fabs(x);
+  double x_abs = fabs(x-mean)/std_dev;
   double K = 1.0 / (1.0 + 0.2316419 * x_abs);
   double w = 1.0 - 1.0 / sqrt(2 * Pi) * exp(- x_abs * x_abs / 2) * (a1 * K + a2 * K * K + a3 * pow(K,3) + a4 * pow(K,4) + a5 * pow(K,5));
   
-  if (x < 0 ){
+  if (x-mean < 0 ){
     w= 1.0 - w;
   }
   return w;
