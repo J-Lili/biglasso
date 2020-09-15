@@ -16,38 +16,78 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p) {
+                   double *r, double *m, int n, int p,
+                   int &steps, int &stepsum,
+                   double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  int nsample = 10000;
+  
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations,steps,stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
     if (ever_active[j] == 0 && discard_beta[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        ever_active[j] = 1;
-        violations++;
+      
+      sum = 0.0;
+      sqr_sum = 0.0;
+      for (int i=0; i < nsample; i++) {
+        double current_sample = xCol[row_idx[i]] * r_diff[i];
+        sum = sum + current_sample;
+        sqr_sum = sqr_sum + current_sample * current_sample;
       }
+      
+      double variance = sqr_sum / nsample - sum / nsample * sum / nsample;
+      
+      var[j] += variance / nsample;
+      sum_prev[j] -= sum * n / nsample;
+      
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+      
+      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
+        stepsum += n;
+        steps++;
+        sum = 0.0;
+        for (int i=0; i < n; i++) {
+          sum = sum + xCol[row_idx[i]] * r[i];
+        }
+        
+        sum_prev[j] = sum;        
+        var[j] = 0;
+        
+        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        if (fabs(z[j] - a[j] * l2) > l1) {
+          ever_active[j] = 1;
+          violations++;
+        }
+      }  
+      else {
+        steps++;
+        stepsum += nsample;
+      }      
     }
   }
+  
+  // zeroing out r_diff
+  for (j = 0; j < p; j++) {
+    if (ever_active[j] == 0 && discard_beta[j] == 0) r_diff = 0;
+  }
+  
   return violations;
 }
 
 // Coordinate descent for gaussian models
 RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                                    SEXP nlambda_, SEXP lam_scale_,
-                                    SEXP lambda_min_, SEXP alpha_, 
-                                    SEXP user_, SEXP eps_, SEXP max_iter_, 
-                                    SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
+                                           SEXP nlambda_, SEXP lam_scale_,
+                                           SEXP lambda_min_, SEXP alpha_, 
+                                           SEXP user_, SEXP eps_, SEXP max_iter_, 
+                                           SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -91,14 +131,14 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
-
+  
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = Calloc(p, double); //Beta from previous iteration
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector n_reject(L);
- 
+  
   double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart; //temp index
@@ -109,6 +149,18 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
   thresh = eps * loss[0] / n;
+  
+  // hypothesis testing, differencing
+  double *r_diff = Calloc(n, double);
+  double *z_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
+  
+  int steps = 0, stepsum = 0; 
+  
+  
+  for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
+  
   
   // EDPP
   double *theta = Calloc(n, double);
@@ -219,7 +271,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
               if (update > max_update) {
                 max_update = update;
               }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+              update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff);
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
@@ -232,15 +284,18 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         // Check for convergence
         if (max_update < thresh) break;
       }
-    
+      
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
+                                  steps,stepsum,r_diff, z_prev, var); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
       }
     }
   }
+  
+  Rprintf("\n Avg steps: %f %d %d\n", ((double)stepsum)/steps, steps,stepsum);
   
   Free(ever_active);
   Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
