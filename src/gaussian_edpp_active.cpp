@@ -105,7 +105,10 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   int *ever_active = Calloc(p, int); // ever-active set
   int *discard_beta = Calloc(p, int); // index set of discarded features;
   double *r = Calloc(n, double);
+  double *r_diff = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
+  for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
   thresh = eps * loss[0] / n;
@@ -219,7 +222,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
               if (update > max_update) {
                 max_update = update;
               }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+              update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff);
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
