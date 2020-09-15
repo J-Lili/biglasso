@@ -179,7 +179,6 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      warn = TRUE, output.time = FALSE,
                      return.time = TRUE,
                      verbose = FALSE) {
-  print("Success in modifying R")
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
@@ -249,7 +248,6 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
-  screen <- "None"
   if (family == 'gaussian') {
     time <- system.time(
       {
