@@ -25,6 +25,8 @@
 using namespace Rcpp;
 using namespace std;
 
+bool is_hypothesis_accepted (double lambda, double mean, double sample_sd,double alpha);
+
 double sign(double x);
 
 double sum(double *x, int n);
