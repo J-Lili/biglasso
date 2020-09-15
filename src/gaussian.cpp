@@ -31,7 +31,7 @@ double pnorm(double x, double mean, double std_dev) {
 // true if hypothesis is accepted, false if not
 // hypothesis: sampling a distribution with mean more extreme than lambda 
 // (<-[lambda], >[lambda]), variance [sample_var] we got [mean]
-bool is_hypothesis_accepted (double lambda,double sample_var, double mean, double alpha) {
+bool is_hypothesis_accepted (double lambda, double mean, double sample_var,double alpha) {
   if (lambda<=abs(mean)) return true;
   double p_value = pnorm(abs(mean),lambda,sqrt(sample_var))-pnorm(-abs(mean),lambda,sqrt(sample_var));
   return (p_value>alpha);
