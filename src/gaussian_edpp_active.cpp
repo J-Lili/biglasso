@@ -16,7 +16,9 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p) {
+                   double *r, double *m, int n, int p,
+                   int &steps, int &stepsum,
+                   double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
@@ -117,6 +119,14 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   double *pv2 = Calloc(n, double);
   double *o = Calloc(n, double);
   double pv2_norm = 0;
+  
+  
+  int steps, stepsum;
+  
+  // hypothesis testing, differencing
+  double *r_diff = Calloc(n, double);
+  double *sum_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
   
   // lambda, equally spaced on log scale
   if (user == 0) {
@@ -219,7 +229,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
               if (update > max_update) {
                 max_update = update;
               }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+              update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj,r_diff);
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
@@ -234,7 +244,9 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
     
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
+                                  steps, stepsum,
+                                  r_diff,sum_prev,var); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
