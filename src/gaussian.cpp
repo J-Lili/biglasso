@@ -71,7 +71,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sum_prev[j] = sum_prev[j] - sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
       
-      if (l1<0.05 && l1>0.04){
+      if (l1<0.05 && l1>0.03){
         Rprintf("l1, estimation, variance %f %f %f %d\n",l1, z[j]-a[j] * l2, sqrt(var[j])/scale[jj], j);
         Rprintf("sum, sqrsum %f %f \n", sum, sqr_sum);
       }
