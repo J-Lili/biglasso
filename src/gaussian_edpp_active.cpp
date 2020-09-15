@@ -16,7 +16,8 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p) {
+                   double *r, double *m, int n, int p,
+                   int &steps, int &stepsum) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
@@ -108,6 +109,8 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   double *r_diff = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
+  int steps, stepsum;
   
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
@@ -237,7 +240,8 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
     
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
+                                  steps, stepsum); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
