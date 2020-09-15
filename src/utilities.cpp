@@ -9,6 +9,37 @@
 
 #include "utilities.h"
 
+
+#ifndef Pi 
+#define Pi 3.141592653589793238463
+#endif 
+
+
+double pnorm(double x, double mean, double std_dev) {
+  double const a1 = 0.31938153, a2 = -0.356563782, a3 = 1.781477937;
+  double const a4 = -1.821255978, a5 = 1.330274429;
+  
+  double x_abs = fabs(x-mean)/std_dev;
+  double K = 1.0 / (1.0 + 0.2316419 * x_abs);
+  double w = 1.0 - 1.0 / sqrt(2 * Pi) * exp(- x_abs * x_abs / 2) * (a1 * K + a2 * K * K + a3 * pow(K,3) + a4 * pow(K,4) + a5 * pow(K,5));
+  
+  if (x-mean < 0 ){
+    w= 1.0 - w;
+  }
+  return w;
+}
+
+
+// true if hypothesis is accepted, false if not
+// hypothesis: sampling a distribution with mean more extreme than lambda 
+// (<-[lambda], >[lambda]), variance [sample_var] we got [mean]
+bool is_hypothesis_accepted (double lambda, double mean, double sample_sd,double alpha) {
+  if (lambda<=abs(mean)) return true;
+  double p_value = pnorm(abs(mean),lambda,sample_sd)-pnorm(-fabs(mean),lambda,sample_sd);
+  return (p_value>alpha);
+}
+
+
 double sign(double x) {
   if(x > 0.00000000001) return 1.0;
   else if(x < -0.00000000001) return -1.0;
