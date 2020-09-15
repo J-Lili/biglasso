@@ -1,5 +1,6 @@
 
 #include "utilities.h"
+#include <vector>
 
 void Free_memo_edpp(double *a, double *r, int *discard_beta, double *theta, double *v1, double *v2, double *o);
 
