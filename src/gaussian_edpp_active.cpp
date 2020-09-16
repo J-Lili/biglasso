@@ -105,8 +105,8 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
     }
   }
   // zeroing out r_diff
-  for (j = 0; j < p; j++) {
-    if (ever_active[j] == 0 && discard_beta[j] == 0) r_diff[j] = 0;
+  for (j = 0; j < n; j++) {
+    r_diff[j] = 0;
   }
   
   return violations;
