@@ -49,7 +49,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
                    double *r, double *m, int n, int p,
-                   int &steps, int &stepsum) {
+                   int &steps, int &stepsum, double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
@@ -139,8 +139,13 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   int *discard_beta = Calloc(p, int); // index set of discarded features;
   double *r = Calloc(n, double);
   double *r_diff = Calloc(n, double);
+  
   for (i = 0; i < n; i++) r[i] = y[i];
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
+  // hypothesis testing, differencing
+  double *sum_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
   
   int steps, stepsum;
   
@@ -273,7 +278,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
-                                  steps, stepsum); 
+                                  steps, stepsum, r_diff, sum_prev, var); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
@@ -285,4 +290,3 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
-
