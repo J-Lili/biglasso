@@ -17,6 +17,37 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
+                   double *r, double *m, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1, l2;
+  int j, jj, violations = 0;
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (ever_active[j] == 0 && discard_beta[j] == 0) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
+        ever_active[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
+
+// check edpp set
+int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
+                   XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+                   NumericVector &center, NumericVector &scale, double *a,
+                   double lambda, double sumResid, double alpha, 
                    double *r, double *m, int n, int p,
                    int &steps, int &stepsum) {
   MatrixAccessor<double> xAcc(*xpMat);
