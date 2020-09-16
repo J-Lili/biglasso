@@ -54,7 +54,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  int nsample = 10000;
+  int nsample = 20000;
   
   #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations,steps,stepsum) schedule(static) 
   
