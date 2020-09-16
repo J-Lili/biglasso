@@ -7,10 +7,37 @@ void Free_memo_edpp(double *a, double *r, int *discard_beta, double *theta, doub
 // V2 - <v1, v2> / ||v1||^2_2 * V1
 void update_pv2(double *pv2, double *v1, double *v2, int n);
 
-// apply EDPP 
-void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
-                 int *row_idx, vector<int> &col_idx, NumericVector &center, 
-                 NumericVector &scale, int n, int p, double rhs);
+// apply EDPP while keeping track of those leaving just now
+void edpp_screen_with_news(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
+                 int *row_idx, vector<int> &col_idx,
+                 NumericVector &center, NumericVector &scale, int n, int p, 
+                 double rhs, bool *newly_entered) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  
+  int j, jj;
+  double lhs, sum_xy, sum_y;
+  double *xCol;
+  
+#pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
+  for (j = 0; j < p; j++) {
+    sum_xy = 0.0;
+    sum_y = 0.0;
+    
+    jj = col_idx[j];
+    xCol = xAcc[jj];
+    for (int i=0; i < n; i++) {
+      sum_xy = sum_xy + xCol[row_idx[i]] * o[i];
+      sum_y = sum_y + o[i];
+    }
+    lhs = fabs((sum_xy - center[jj] * sum_y) / scale[jj]);
+    if (lhs < rhs) {
+      discard_beta[j] = 1;
+    } else {     
+      if (discard_beta[j]) newly_entered[j] = true;
+      discard_beta[j] = 0;
+    }
+  }
+}
 
 // check edpp set
 int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
@@ -49,7 +76,8 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
                    double *r, double *m, int n, int p,
-                   int &steps, int &stepsum, double *r_diff, double *sum_prev, double *var) {
+                   int &steps, int &stepsum, double *r_diff, double *sum_prev, double *var,
+                   bool *newly_entered) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
@@ -81,14 +109,14 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
       
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       
-      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
+      if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
         stepsum += n;
         steps++;
         sum = 0.0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (fabs(sum_prev[j]-sum)>0.0006) Rprintf("%f %f %d\n",sum_prev[j],sum,j);
+        if (!newly_entered[j] && fabs(sum_prev[j]-sum)>0.0006) Rprintf("%f %f %d\n",sum_prev[j],sum,j);
         sum_prev[j] = sum;        
         var[j] = 0;
         
@@ -97,6 +125,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
           ever_active[j] = 1;
           violations++;
         }
+        newly_entered[j] = false;
       }  
       else {
         steps++;
@@ -183,6 +212,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   // hypothesis testing, differencing
   double *sum_prev = Calloc(p, double);
   double *var = Calloc(p, double);
+  bool *newly_entered = Calloc(p, bool);
   
   int steps = 0, stepsum = 0;
   
@@ -275,7 +305,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     double rhs = n - 0.5 * pv2_norm * sqrt(n); 
     
     // apply EDPP
-    edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
+    edpp_screen_with_news(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs, newly_entered);
     n_reject[l] = sum(discard_beta, p);
     
     while (iter[l] < max_iter) {
@@ -315,7 +345,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
-                                  steps, stepsum, r_diff, sum_prev, var); 
+                                  steps, stepsum, r_diff, sum_prev, var, newly_entered); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
