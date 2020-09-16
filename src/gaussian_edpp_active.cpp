@@ -54,7 +54,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  int nsample = 20000;
+  int nsample = n;
   
   #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations,steps,stepsum) schedule(static) 
   
@@ -88,7 +88,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        
+        if (fabs(sum_prev[j]-sum)>0.0006) Rprintf("%f %f %d\n",sum_prev[j],sum,j);
         sum_prev[j] = sum;        
         var[j] = 0;
         
