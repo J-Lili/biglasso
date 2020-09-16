@@ -51,27 +51,64 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
                    double *r, double *m, int n, int p,
                    int &steps, int &stepsum, double *r_diff, double *sum_prev, double *var) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  int nsample = 10000;
+  
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations,steps,stepsum) schedule(static) 
+  
   for (j = 0; j < p; j++) {
     if (ever_active[j] == 0 && discard_beta[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        ever_active[j] = 1;
-        violations++;
+      
+      sum = 0.0;
+      sqr_sum = 0.0;
+      for (int i=0; i < nsample; i++) {
+        double current_sample = xCol[row_idx[i]] * r_diff[i];
+        sum = sum + current_sample;
+        sqr_sum = sqr_sum + current_sample * current_sample;
       }
+      
+      double variance = sqr_sum / nsample - sum / nsample * sum / nsample;
+      
+      var[j] += variance / nsample;
+      sum_prev[j] -= sum * n / nsample;
+      
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+      
+      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
+        stepsum += n;
+        steps++;
+        sum = 0.0;
+        for (int i=0; i < n; i++) {
+          sum = sum + xCol[row_idx[i]] * r[i];
+        }
+        
+        sum_prev[j] = sum;        
+        var[j] = 0;
+        
+        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        if (fabs(z[j] - a[j] * l2) > l1) {
+          ever_active[j] = 1;
+          violations++;
+        }
+      }  
+      else {
+        steps++;
+        stepsum += nsample;
+      }      
     }
   }
+  // zeroing out r_diff
+  for (j = 0; j < p; j++) {
+    if (ever_active[j] == 0 && discard_beta[j] == 0) r_diff = 0;
+  }
+  
   return violations;
 }
 
@@ -285,6 +322,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
     }
   }
+  Rprintf("\n Avg steps: %f %d %d\n", ((double)stepsum)/steps, steps,stepsum);
   
   Free(ever_active);
   Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
