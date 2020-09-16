@@ -184,7 +184,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   double *sum_prev = Calloc(p, double);
   double *var = Calloc(p, double);
   
-  int steps, stepsum;
+  int steps = 0, stepsum = 0;
   
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
