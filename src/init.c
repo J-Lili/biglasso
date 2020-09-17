@@ -41,6 +41,13 @@ extern SEXP cdfit_binomial_hsr_slores_nac(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
                                           SEXP max_iter_, SEXP multiplier_, 
                                           SEXP dfmax_, SEXP ncore_, SEXP warn_,
                                           SEXP safe_thresh_, SEXP verbose_);
+// Coordinate descent for gaussian models
+extern SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_, 
+                           SEXP lambda_, SEXP nlambda_, 
+                           SEXP lam_scale_, SEXP lambda_min_, 
+                           SEXP alpha_, SEXP user_, SEXP eps_, 
+                           SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                           SEXP ncore_, SEXP verbose_);
 
 // Coordinate descent for gaussian models
 extern SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, 
