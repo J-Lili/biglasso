@@ -163,6 +163,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
   
+  int strong_set_checks = 0, rest_set_checks = 0;
+  
   // set up omp
   int useCores = INTEGER(ncore_)[0];
 #ifdef BIGLASSO_OMP_H_
@@ -359,12 +361,21 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         
         // Scan for violations in strong set
         violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
+        for (int i = 0; i < p; i++) {
+          if (e1[j] == 0 && e2[j] == 1) strong_set_checks++;
+        }
         if (violations == 0) break;
       }
       
       // Scan for violations in rest set
       if (bedpp) {
         violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_reject, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
+        for (int i = 0; i < p; i++) {
+          if (bedpp_reject[j] == 0 && e2[j] == 0) rest_set_checks++;
+        }
+        
+        
+          
       } else {
         violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
       }
@@ -379,6 +390,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       bedpp = 0; // turn off bedpp for next iteration if not efficient
     }
   }
+  
+  Rprintf("strong checks: %d rest checks %d",strong_set_checks,rest_set_checks);
  
   Free_memo_hsr(a, r, e1, e2);
   Free(bedpp_reject);
