@@ -1,4 +1,4 @@
-Package: biglasso-exp
+Package: biglassoexp
 Version: 1.3-7
 Date: 2019-08-31
 Title: Extending Lasso Model Fitting to Big Data
