@@ -11,7 +11,7 @@ biglasso(
   penalty = c("lasso", "ridge", "enet"),
   family = c("gaussian", "binomial"),
   alg.logistic = c("Newton", "MM"),
-  screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome",
+  screen = c("turbo", SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome",
     "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
     "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"),
   safe.thresh = 0,
