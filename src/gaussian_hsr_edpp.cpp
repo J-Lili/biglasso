@@ -361,8 +361,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         
         // Scan for violations in strong set
         violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-        for (int i = 0; i < p; i++) {
-          if (e1[j] == 0 && e2[j] == 1) strong_set_checks++;
+        for (int ii = 0; ii < p; ii++) {
+          if (e1[ii] == 0 && e2[ii] == 1) strong_set_checks++;
         }
         if (violations == 0) break;
       }
@@ -370,8 +370,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       // Scan for violations in rest set
       if (bedpp) {
         violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_reject, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-        for (int i = 0; i < p; i++) {
-          if (bedpp_reject[j] == 0 && e2[j] == 0) rest_set_checks++;
+        for (int ii = 0; ii < p; ii++) {
+          if (bedpp_reject[ii] == 0 && e2[ii] == 0) rest_set_checks++;
         }
         
         
