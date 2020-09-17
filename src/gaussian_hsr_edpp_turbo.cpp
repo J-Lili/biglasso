@@ -18,31 +18,15 @@ void update_zj(vector<double> &z,
                int *bedpp_reject, int *bedpp_reject_old,
                XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
                NumericVector &center, NumericVector &scale, 
-               double sumResid, double *r, double *m, int n, int p) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum;
-  int j, jj;
-  
-#pragma omp parallel for private(j, sum) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (bedpp_reject[j] == 0 && bedpp_reject_old[j] == 1) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-    }
-  }
-}
+               double sumResid, double *r, double *m, int n, int p);
 
 // check rest set with bedpp screening
 int check_rest_set_hsr_bedpp(int *e1, int *e2, int *reject, vector<double> &z, 
                              XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
                              NumericVector &center, NumericVector &scale, double *a,
                              double lambda, double sumResid, double alpha, double *r, 
-                             double *m, int n, int p) {
+                             double *m, int n, int p, 
+                             int steps, int stepsum) {
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
@@ -75,56 +59,16 @@ int check_rest_set_hsr_bedpp(int *e1, int *e2, int *reject, vector<double> &z,
 void bedpp_init(vector<double>& sign_lammax_xtxmax,
                 XPtr<BigMatrix> xMat, int xmax_idx, double *y, double lambda_max, 
                 int *row_idx, vector<int>& col_idx, NumericVector& center, 
-                NumericVector& scale, int n, int p) {
-  MatrixAccessor<double> xAcc(*xMat);
-  double *xCol, *xCol_max;
-  double sum_xjxmax, sum_xmaxTy, sign_xmaxTy;
-  xCol_max = xAcc[xmax_idx];
-  int j, jj;
-  // sign of xmaxTy
-  sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
-  sign_xmaxTy = sign(sum_xmaxTy);
-  
-#pragma omp parallel for private(j, sum_xjxmax) schedule(static) 
-  for (j = 0; j < p; j++) { // p = p_keep
-    jj = col_idx[j]; // index in the raw XMat, not in col_idx;
-    if (jj != xmax_idx) {
-      xCol = xAcc[jj];
-      sum_xjxmax = 0.0;
-      for (int i = 0; i < n; i++) {
-        sum_xjxmax = sum_xjxmax + xCol[row_idx[i]] * xCol_max[row_idx[i]];
-      }
-      sign_lammax_xtxmax[j] = sign_xmaxTy * lambda_max * (sum_xjxmax - n * center[jj] * 
-        center[xmax_idx]) / (scale[jj] * scale[xmax_idx]);;
-    } else {
-      sign_lammax_xtxmax[j] = sign_xmaxTy * lambda_max * n;
-    }
-  }
-}
+                NumericVector& scale, int n, int p);
 
 // Basic (non-sequential) EDPP test
 void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
                   const vector<double>& XTy, double ynorm_sq, int *row_idx, 
                   vector<int>& col_idx, double lambda, double lambda_max, 
-                  double alpha, int n, int p) {
-  double LHS = 0.0;
-  double RHS = 2 * n * alpha * lambda * lambda_max - (lambda_max - lambda) * 
-    sqrt(n * ynorm_sq * (1 + lambda * (1 - alpha)) - pow(n * alpha * lambda_max, 2));
-  int j;
-  
-#pragma omp parallel for private(j, LHS) schedule(static)
-  for (j = 0; j < p; j++) { // p = p_keep
-    LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * alpha * sign_lammax_xtxmax[j] / (1 + lambda * (1 - alpha));
-    if (fabs(LHS) < RHS) {
-      bedpp_reject[j] = 1;
-    } else {
-      bedpp_reject[j] = 0;
-    }
-  }
-}
+                  double alpha, int n, int p);
 
 // Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,  
+RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,  
                                          SEXP lambda_, SEXP nlambda_,
                                          SEXP lam_scale_,
                                          SEXP lambda_min_, SEXP alpha_, 
@@ -215,6 +159,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double *r_diff = Calloc(n, double);
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
+  int steps = 0, stepsum = 0;
   
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
@@ -369,7 +315,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       
       // Scan for violations in rest set
       if (bedpp) {
-        violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_reject, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
+        violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_reject, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
+                                              steps, stepsum);
         for (int ii = 0; ii < p; ii++) {
           if (bedpp_reject[ii] == 0 && e2[ii] == 0) rest_set_checks++;
         }
