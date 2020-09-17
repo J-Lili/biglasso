@@ -210,6 +210,10 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   int *e2 = Calloc(p, int); // strong set
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
+  
+  double *r_diff = Calloc(n, double);
+  for (i = 0; i < n; i++) r_diff[i] = -y[i];
+  
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
@@ -343,7 +347,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // Update r
+                update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // Update r
                 sumResid = sum(r, n); //update sum of residual
                 a[j] = beta(j, l); //update a
               }
