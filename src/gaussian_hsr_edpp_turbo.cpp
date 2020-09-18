@@ -71,7 +71,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
     }
   }
   
-  for (j = 0; j < p; j++) r_diff[j] = 0;
+  for (j = 0; j < n; j++) r_diff[j] = 0;
   
   return violations;
 }
