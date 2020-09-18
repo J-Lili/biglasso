@@ -45,7 +45,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       Rprintf("%d %d\n",j, newly_entered[j]);
       if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.001)) {
-        newly_entered[j] = false;
+       
         steps++;
         stepsum += n;
         sum = 0.0;
@@ -53,6 +53,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
           sum = sum + xCol[row_idx[i]] * r[i];
         }
         if (!newly_entered[j] && fabs(sum-sum_prev[j])>0.006) Rprintf("different %d %f %f\n", j, sum, sum_prev[j]);
+        newly_entered[j] = false;
         sum_prev[j] = sum;        
         var[j] = 0;
         
