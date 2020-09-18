@@ -174,7 +174,7 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_gaussian_edpp_batchfix_hsr", (DL_FUNC) &cdfit_gaussian_edpp_batchfix_hsr, 16},
   {"cdfit_gaussian_hsr", (DL_FUNC) &cdfit_gaussian_hsr, 15},
   {"cdfit_gaussian_hsr_dome", (DL_FUNC) &cdfit_gaussian_hsr_dome, 16},
-  {"cdfit_gaussian_hsr_bedpp_turbo", (DL_FUNC) &cdfit_gaussian_hsr_bedpp, 16},
+  {"cdfit_gaussian_hsr_bedpp_turbo", (DL_FUNC) &cdfit_gaussian_hsr_bedpp_turbo, 16},
   {"cdfit_gaussian_hsr_bedpp", (DL_FUNC) &cdfit_gaussian_hsr_bedpp, 16},
   {"cdfit_gaussian_nac", (DL_FUNC) &cdfit_gaussian_nac, 15},
   {"cdfit_gaussian_hsr_nac", (DL_FUNC) &cdfit_gaussian_hsr_nac, 15},
