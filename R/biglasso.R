@@ -406,7 +406,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
+    if (screen %in% c("SSR-Dome", "SSR-BEDPP-turbo", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
                       "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
@@ -530,7 +530,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     rejections = rejections
   )
   
-    if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", "SSR-BEDPP", "SSR-BEDPP-NAC",
+    if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", "SSR-BEDPP", "SSR-BEDPP-turbo", "SSR-BEDPP-NAC",
                       "SSR-Slores-Batch", "SSR-Slores", "SSR-Slores-NAC",
                       "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
     return.val$safe_rejections <- safe_rejections
