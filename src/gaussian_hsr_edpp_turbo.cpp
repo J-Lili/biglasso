@@ -11,7 +11,68 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                      int *row_idx, vector<int> &col_idx,
                      NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double sumResid, double alpha, 
-                     double *r, double *m, int n, int p);
+                     double *r, double *m, int n, int p,
+                     int steps, int stepsum,
+                     double *r_diff, double *sum_prev, double *var, bool *newly_entered) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, sqrsum, l1, l2;
+  int j, jj, violations = 0;
+  
+  int nsample = n / 10;
+  
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (e1[j] == 0 && e2[j] == 1) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      
+      sum = 0.0;
+      sqrsum = 0.0;
+      for (int i=0; i < nsample; i++) {
+        double current_sample = xCol[row_idx[i]] * r_diff[i];
+        sum = sum + current_sample;
+        sqrsum = sqrsum + current_sample * current_sample;
+      }
+      
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      
+      double variance = (sqrsum/nsample-sum/nsample*sum/nsample);
+      
+      var[j] += variance / nsample;
+      sum_prev[j] = sum_prev[j] - sum * n / nsample;
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+
+      if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.001)) {
+        steps++;
+        stepsum += n;
+        sum = 0.0;
+        for (int i=0; i < n; i++) {
+          sum = sum + xCol[row_idx[i]] * r[i];
+        }
+        
+        sum_prev[j] = sum;        
+        var[j] = 0;
+        
+        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        
+        if(fabs(z[j] - a[j] * l2) > l1) {
+          e1[j] = 1;
+          violations++;
+        }
+      }
+      else {
+        steps++;
+        stepsum += nsample;
+      }   
+    }
+  }
+  
+  for (j = 0; j < p; j++) r_diff = 0;
+  
+  return violations;
+}
 
 // update z[j] for features which are rejected at previous lambda but not rejected at current one.
 void update_zj(vector<double> &z,
@@ -160,6 +221,11 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   double *r_diff = Calloc(n, double);
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
   
+  // hypothesis testing, differencing
+  double *sum_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
+  bool *newly_entered = Calloc(p, bool);
+  
   int steps = 0, stepsum = 0;
   
   double sumResid = sum(r, n);
@@ -253,6 +319,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         bedpp_reject_old[j] = bedpp_reject[j];
         // hsr screening
         if (bedpp_reject[j] == 0 && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
+          if (e2[j]==0) newly_entered[j] = true;
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -306,7 +373,9 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
+        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p,
+                                      steps,stepsum,
+                                      r_diff, sum_prev, var, newly_entered);
         for (int ii = 0; ii < p; ii++) {
           if (e1[ii] == 0 && e2[ii] == 1) strong_set_checks++;
         }
@@ -339,7 +408,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   Rprintf("strong checks: %d rest checks %d",strong_set_checks,rest_set_checks);
-  
+  Rprintf("\n Avg steps: %f %f\n", ((double)stepsum)/steps, ((double)stepsum/(steps*n)));
   Free_memo_hsr(a, r, e1, e2);
   Free(bedpp_reject);
   Free(bedpp_reject_old);
