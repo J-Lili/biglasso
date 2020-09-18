@@ -6,7 +6,7 @@ void Free_memo(double *a, double *r, int *e1);
 
 
 // check KKT conditions over features in the rest set
-int check_inactive_sett(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
+int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
                        double *r_diff, double *sum_prev, double *var) {
@@ -242,7 +242,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_sett(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
                                       r_diff, z_prev, var); 
       if (violations==0) {
         loss[l] = gLoss(r, n);

@@ -1,5 +1,5 @@
+
 #include "utilities.h"
-#include <vector>
 
 void Free_memo(double *a, double *r, int *e1) {
   Free(a);
@@ -7,68 +7,33 @@ void Free_memo(double *a, double *r, int *e1) {
   Free(e1);
 }
 
-
-
 // check KKT conditions over features in the rest set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
-                       double *r_diff, double *sum_prev, double *var) {
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
+  
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, sqr_sum, l1, l2;
-  int nsample = n / 10;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, sqr_sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
-      sqr_sum = 0.0;
-      for (int i=0; i < nsample; i++) {
-        double current_sample = xCol[row_idx[i]] * r_diff[i];
-        sum = sum + current_sample;
-        sqr_sum = sqr_sum + current_sample * current_sample;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
       }
-      double current_scale = (scale[jj] * n);
+      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
-      
-      double variance= (sqr_sum/nsample-sum/nsample*sum/nsample);
-      
-      var[j] += variance / nsample;
-      sum_prev[j] = sum_prev[j] - sum * n / nsample;
-      z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
-      double z_orig = z[j];
-      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
-        stepsum += n;
-        steps++;
-        sum = 0.0;
-        for (int i=0; i < n; i++) {
-          sum = sum + xCol[row_idx[i]] * r[i];
-        }
-        sum_prev[j] = sum;
-        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-        if (fabs(z[j] - a[j] * l2) > l1) {
-          e1[j] = 1;
-          violations++;
-        }
-        else{
-          Rprintf("l1, estimation, variance %f %f %f %f %d\n",l1,z_orig-a[j] * l2, z[j]-a[j] * l2, sqrt(var[j])/scale[jj], j); 
-        }
-        var[j] = 0;
-      }        
-
-      else {
-        steps++;
-        stepsum += nsample;
+      if (fabs(z[j] - a[j] * l2) > l1) {
+        e1[j] = 1;
+        violations++;
       }
     }
   }
-  
-  for (int i = 0; i < n ; i++) r_diff[i] = 0;
-
   return violations;
 }
 
@@ -152,20 +117,10 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   int i, j, jj, l, violations, lstart;
   int *e1 = Calloc(p, int); // ever active set
   double *r = Calloc(n, double);
-  
-  // hypothesis testing, differencing
-  double *r_diff = Calloc(n, double);
-  double *z_prev = Calloc(p, double);
-  double *var = Calloc(p, double);
-  
   for (i = 0; i < n; i++) r[i] = y[i];
-  for (i = 0; i < n; i++) r_diff[i] = -y[i];
-  
-  
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
-  int steps = 0, stepsum = 0; 
   
   // set up lambda
   if (user == 0) {
@@ -216,8 +171,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         iter[l]++;
         
         //solve lasso over ever-active set
-        max_update = 0.0;              
-        
+        max_update = 0.0;
         for (j = 0; j < p; j++) {
           if (e1[j]) {
             jj = col_idx[j];
@@ -234,8 +188,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
               if (update > max_update) {
                 max_update = update;
               }
-              
-              update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
+              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
@@ -246,16 +199,13 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
-                                      r_diff, z_prev, var); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
       }
     }
   }
-  
-  Rprintf("\n Avg steps: %f %d %d\n", ((double)stepsum)/steps, steps,stepsum);
   
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
