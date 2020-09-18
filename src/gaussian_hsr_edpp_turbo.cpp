@@ -12,7 +12,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                      NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p,
-                     int steps, int stepsum,
+                     int &steps, int &stepsum,
                      double *r_diff, double *sum_prev, double *var, bool *newly_entered) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqrsum, l1, l2;
@@ -87,7 +87,7 @@ int check_rest_set_hsr_bedpp(int *e1, int *e2, int *reject, vector<double> &z,
                              NumericVector &center, NumericVector &scale, double *a,
                              double lambda, double sumResid, double alpha, double *r, 
                              double *m, int n, int p, 
-                             int steps, int stepsum) {
+                             int &steps, int &stepsum) {
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
