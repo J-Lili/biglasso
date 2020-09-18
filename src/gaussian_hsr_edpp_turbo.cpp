@@ -50,6 +50,11 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
+        
+        
+        double z_true = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        if (fabs(z_true - a[j] * l2) <= l1) Rprintf("%f %f %f %f\n", l1, z_true, z[j], var[j]);
+        
         newly_entered[j] = false;
         sum_prev[j] = sum;        
         var[j] = 0;
