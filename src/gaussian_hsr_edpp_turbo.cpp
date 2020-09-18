@@ -332,6 +332,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
 #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
         if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
+          if (e2[j]==0) newly_entered[j] = true;
           e2[j] = 1;
         } else {
           e2[j] = 0;
