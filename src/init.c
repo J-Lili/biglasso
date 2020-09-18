@@ -107,6 +107,16 @@ extern SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
                                      SEXP safe_thresh_,
                                      SEXP verbose_);
 
+extern SEXP cdfit_gaussian_hsr_bedpp_turbo(SEXP X_, SEXP y_, SEXP row_idx_,  
+                                     SEXP lambda_, SEXP nlambda_,
+                                     SEXP lam_scale_,
+                                     SEXP lambda_min_, SEXP alpha_, 
+                                     SEXP user_, SEXP eps_,
+                                     SEXP max_iter_, SEXP multiplier_, 
+                                     SEXP dfmax_, SEXP ncore_, 
+                                     SEXP safe_thresh_,
+                                     SEXP verbose_);
+
 // Coordinate descent for gaussian models (no active cycling)
 extern SEXP cdfit_gaussian_nac(SEXP X_, SEXP y_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, 
@@ -164,6 +174,7 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_gaussian_edpp_batchfix_hsr", (DL_FUNC) &cdfit_gaussian_edpp_batchfix_hsr, 16},
   {"cdfit_gaussian_hsr", (DL_FUNC) &cdfit_gaussian_hsr, 15},
   {"cdfit_gaussian_hsr_dome", (DL_FUNC) &cdfit_gaussian_hsr_dome, 16},
+  {"cdfit_gaussian_hsr_bedpp_turbo", (DL_FUNC) &cdfit_gaussian_hsr_bedpp, 16},
   {"cdfit_gaussian_hsr_bedpp", (DL_FUNC) &cdfit_gaussian_hsr_bedpp, 16},
   {"cdfit_gaussian_nac", (DL_FUNC) &cdfit_gaussian_nac, 15},
   {"cdfit_gaussian_hsr_nac", (DL_FUNC) &cdfit_gaussian_hsr_nac, 15},
