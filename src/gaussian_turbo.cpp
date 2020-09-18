@@ -50,9 +50,6 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
           e1[j] = 1;
           violations++;
         }
-        else{
-          Rprintf("l1, estimation, variance %f %f %f %f %d\n",l1,z_orig-a[j] * l2, z[j]-a[j] * l2, sqrt(var[j])/scale[jj], j); 
-        }
         var[j] = 0;
       }        
       
