@@ -18,7 +18,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
   double *xCol, sum, sqrsum, l1, l2;
   int j, jj, violations = 0;
   
-  int nsample = n / 10;
+  int nsample = n;
   
   
 #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
@@ -51,7 +51,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        
+        if (!newly_entered[j] && fabs(sum-sum_prev[j])>0.006) Rprintf("different %f %f\n",sum, sum_prev[j]);
         sum_prev[j] = sum;        
         var[j] = 0;
         
