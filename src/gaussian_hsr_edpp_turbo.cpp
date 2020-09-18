@@ -45,6 +45,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
 
       if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.001)) {
+        newly_entered[j] = false;
         steps++;
         stepsum += n;
         sum = 0.0;
