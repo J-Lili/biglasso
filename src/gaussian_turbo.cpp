@@ -37,7 +37,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       sum_prev[j] = sum_prev[j] - sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
       double z_orig = z[j];
-      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.01)) {
+      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.0001)) {
         stepsum += n;
         steps++;
         sum = 0.0;
