@@ -258,7 +258,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   }
   
-  Rprintf("\n Avg steps: %f %d %d\n", ((double)stepsum)/steps, steps,stepsum);
+  Rprintf("\n Avg steps: %f %d\n", ((double)stepsum)/steps/n, n);
   
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
