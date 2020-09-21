@@ -9,7 +9,7 @@ void Free_memo(double *a, double *r, int *e1);
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                        vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, double *r, double *m, int n, int p, int &steps, int &stepsum,
-                       double *r_diff, double *sum_prev, double *var) {
+                       double *r_diff, double *sum_prev, double *var, int *start_pos) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, sqr_sum, l1, l2;
   int nsample = n / 10;
@@ -21,11 +21,12 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       xCol = xAcc[jj];
       sum = 0.0;
       sqr_sum = 0.0;
-      for (int i=0; i < nsample; i++) {
+      for (int i = start_pos[j]; i < start_pos[j] + nsample; i++) {
         double current_sample = xCol[row_idx[i]] * r_diff[i];
         sum = sum + current_sample;
         sqr_sum = sqr_sum + current_sample * current_sample;
       }
+      start_pos[j] = (start_pos[j]+2*nsample < n) ?  start_pos[j]+nsample : 0;
       double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
@@ -150,6 +151,8 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   double *r_diff = Calloc(n, double);
   double *z_prev = Calloc(p, double);
   double *var = Calloc(p, double);
+  int *start_pos = Calloc(p, int);
+  
   
   for (i = 0; i < n; i++) r[i] = y[i];
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
@@ -240,7 +243,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
       
       // Scan for violations in inactive set
       violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
-                                      r_diff, z_prev, var); 
+                                      r_diff, z_prev, var, start_pos); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
