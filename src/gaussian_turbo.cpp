@@ -21,23 +21,30 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       xCol = xAcc[jj];
       sum = 0.0;
       sqr_sum = 0.0;
-      for (int i = start_pos[j]; i < start_pos[j] + nsample; i++) {
-        double current_sample = xCol[row_idx[i]] * r_diff[i];
-        sum = sum + current_sample;
-        sqr_sum = sqr_sum + current_sample * current_sample;
-      }
-      start_pos[j] = (start_pos[j]+2*nsample < n) ?  start_pos[j]+nsample : 0;
+      nsample = 50;      
+      
       double current_scale = (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
       
-      double variance= (sqr_sum/nsample-sum/nsample*sum/nsample);
-      
-      var[j] += variance / nsample;
-      sum_prev[j] = sum_prev[j] - sum * n / nsample;
-      z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
-      double z_orig = z[j];
+      do {        
+        nsample = nsample * 2;
+         for (int i = start_pos[j]; i < start_pos[j] + nsample; i++) {
+          double current_sample = xCol[row_idx[i]] * r_diff[i];
+          sum = sum + current_sample;
+          sqr_sum = sqr_sum + current_sample * current_sample;
+        }      
+        double variance= (sqr_sum/nsample-sum/nsample*sum/nsample);
+
+        start_pos[j] = (start_pos[j]+2*nsample < n) ?  start_pos[j]+nsample : 0;
+        var[j] += variance / nsample;
+        sum_prev[j] = sum_prev[j] - sum * n / nsample;
+        z[j] = (sum_prev[j] - center[jj] * sumResid) / current_scale;
+      }
+      while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.0001));
+     
+  
       if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.0001)) {
         stepsum += n;
         steps++;
