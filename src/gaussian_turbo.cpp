@@ -21,7 +21,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       xCol = xAcc[jj];
       sum = 0.0;
       sqr_sum = 0.0;
-      int n_current_sample = 50;
+      int n_current_sample = max(50, n/1024);
       nsample = 0;      
       
       double current_scale = (scale[jj] * n);
