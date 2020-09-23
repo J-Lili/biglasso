@@ -167,6 +167,8 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   for (i = 0; i < n; i++) r_diff[i] = -y[i];
   
   
+  int resid_diff_check_number = 0;
+  
   double sumResid = sum(r, n);
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
@@ -241,6 +243,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
               }
               
               update_resid_diff(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj, r_diff); // update r
+              resid_diff_check_number++;
               sumResid = sum(r, n); //update sum of residual
               a[j] = beta(j, l); //update a
             }
@@ -261,6 +264,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   Rprintf("\n Avg steps: %f %d\n", ((double)stepsum)/steps/n, n);
+  Rprintf("\n resid diff num: %d\n", resid_diff_check_number);
   
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
