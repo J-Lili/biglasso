@@ -266,6 +266,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
+      }
     }
   }
   
