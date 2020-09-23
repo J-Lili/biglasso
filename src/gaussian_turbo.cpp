@@ -39,7 +39,11 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         nsample = nsample + n_current_sample;
 
         variance = (sqr_sum/nsample-sum/nsample*sum/nsample);
-        start_pos[j] = (start_pos[j]+3*n_current_sample < n) ?  start_pos[j]+n_current_sample : 0;        
+        start_pos[j] = (start_pos[j]+3*n_current_sample < n) ?  start_pos[j]+n_current_sample : 0;    
+        
+        if (start_pos[j]!=0) Rprintf("not zero start pos %d %d\n",j,start_pos[j]);
+        if (nsample != n) Rprintf("not n nsample %d %d\n",j, nsample);
+        
         z[j] = ((sum_prev[j] - sum * n / nsample) - center[jj] * sumResid) / current_scale;
      // }  while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j] + variance / nsample)/scale[jj] ,0.0001));
       
@@ -269,6 +273,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   
   Rprintf("\n Avg steps: %f %d\n", ((double)stepsum)/steps/n, n);
   Rprintf("\n resid diff num: %d\n", resid_diff_check_number);
+  Rprintf("changes have been made");
   
   Free_memo(a, r, e1);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
