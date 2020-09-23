@@ -219,9 +219,6 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
     } 
     
     while(iter[l] < max_iter){
-      // Setting r_diff to the original values
-      for  (int j = 0; j < n; j++) r_diff[j] = -r[j]; 
-      
       // Coordinate descent
       while(iter[l] < max_iter) {
         iter[l]++;
@@ -262,10 +259,13 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
       // Scan for violations in inactive set
       violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p, steps, stepsum,
                                       r_diff, z_prev, var, start_pos); 
+      
+      // Setting r_diff to reflect current values
+      for  (int j = 0; j < n; j++) r_diff[j] = -r[j]; 
+      
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;
-      }
     }
   }
   
