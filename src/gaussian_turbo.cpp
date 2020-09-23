@@ -162,10 +162,7 @@ RcppExport SEXP cdfit_gaussian_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   double *var = Calloc(p, double);
   int *start_pos = Calloc(p, int);
   
-  
   for (i = 0; i < n; i++) r[i] = y[i];
-  for (i = 0; i < n; i++) r_diff[i] = -y[i];
-  
   
   int resid_diff_check_number = 0;
   
