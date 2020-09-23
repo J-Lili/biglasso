@@ -40,10 +40,10 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
 
         variance = (sqr_sum/nsample-sum/nsample*sum/nsample);
         start_pos[j] = (start_pos[j]+3*n_current_sample < n) ?  start_pos[j]+n_current_sample : 0;        
-        z[j] = ((sum_prev[j] - sum * n / nsample) - center[jj] * sumResid) / current_scale;
+        z[j] = ((sum_prev[j] + sum * n / nsample) - center[jj] * sumResid) / current_scale;
       }  while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j] + variance / nsample)/scale[jj] ,0.0001));
       
-      sum_prev[j] -= sum * n / nsample;
+      sum_prev[j] += sum * n / nsample;
       var[j] += variance / nsample;
 
   
