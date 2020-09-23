@@ -30,7 +30,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       l2 = lambda * m[jj] * (1 - alpha);
       
     // do {        
-        n_current_sample = n / 100; //n_current_sample * 2; 
+        n_current_sample = n / 10; //n_current_sample * 2; 
         for (int i = start_pos[j]; i < start_pos[j] + n_current_sample; i++) {
           double current_sample = xCol[row_idx[i]] * r_diff[i];
           sum = sum + current_sample;
