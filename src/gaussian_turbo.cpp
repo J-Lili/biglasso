@@ -29,8 +29,8 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
       
-    // do {        
-        n_current_sample = n / 100; //n_current_sample * 2; 
+      do {        
+        n_current_sample = n_current_sample * 2; 
         for (int i = start_pos[j]; i < start_pos[j] + n_current_sample; i++) {
           double current_sample = xCol[row_idx[i]] * r_diff[i];
           sum = sum + current_sample;
@@ -41,7 +41,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         variance = (sqr_sum/nsample-sum/nsample*sum/nsample);
         start_pos[j] = (start_pos[j]+3*n_current_sample < n) ?  start_pos[j]+n_current_sample : 0;        
         z[j] = ((sum_prev[j] - sum * n / nsample) - center[jj] * sumResid) / current_scale;
-     // }  while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j] + variance / nsample)/scale[jj] ,0.0001));
+      }  while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j] + variance / nsample)/scale[jj] ,0.0001));
       
       sum_prev[j] -= sum * n / nsample;
       var[j] += variance / nsample;
