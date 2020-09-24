@@ -48,11 +48,14 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       if (j==695) {
         double true_sum = 0.0;
+        double true_diff = 0.0;
         for (int i=0; i < n; i++) {
           true_sum = true_sum + xCol[row_idx[i]] * r[i];
+          true_diff = true_diff +xCol[row_idx[i]] * r_diff[i];
         }
         double true_z = (true_sum - center[jj] * sumResid) / (scale[jj] * n);
         Rprintf("%d: %f %f %f var %.4e current %.4e scaled %.4e__ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], variance, variance/nsample, start_pos[j]);
+        Rprintf("diff est true %f %f __ cumulative est true f% f%\n", sum*n/nsample, true_diff, sum_prev[j], true_sum);
         if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j])/scale[jj] ,0.0001)) {
           Rprintf("accepted\n");
         }
