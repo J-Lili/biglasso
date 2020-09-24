@@ -70,7 +70,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         }
         double true_z = (true_sum - center[jj] * sumResid) / (scale[jj] * n);
         if (fabs(true_z - a[j] * l2) > l1) {
-          Rprintf("%d: %f %f %f %f __ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], start_pos[j]);
+          Rprintf("%d: %f %f %f %.4e __ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], start_pos[j]);
         }
         
         
