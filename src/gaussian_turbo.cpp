@@ -32,14 +32,14 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       //do {        
         n_current_sample = n / 10; // n_current_sample * 2; 
         for (int i = start_pos[j]; i < start_pos[j] + n_current_sample; i++) {
-          double current_sample = xCol[row_idx[i]] * r_diff[i];
+          double current_sample = xCol[row_idx[i % n]] * r_diff[i % n];
           sum = sum + current_sample;
           sqr_sum = sqr_sum + current_sample * current_sample;
         }              
         nsample = nsample + n_current_sample;
 
         variance = (sqr_sum/nsample-sum/nsample*sum/nsample);
-        start_pos[j] = (start_pos[j]+3*n_current_sample < n) ?  start_pos[j]+n_current_sample : 0;        
+        start_pos[j] = (start_pos[j] + n_current_sample) % n;       
         z[j] = ((sum_prev[j] + sum * n / nsample) - center[jj] * sumResid) / current_scale;
       //}  while (nsample<n/4 && is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j] + variance / nsample)/scale[jj] ,0.0001));
       
