@@ -33,7 +33,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         n_current_sample = n / 10; // n_current_sample * 2; 
         for (int i = start_pos[j]; i < start_pos[j] + n_current_sample; i++) {
           double current_sample = xCol[row_idx[i % n]] * r_diff[i % n];
-          sum = sum + current_sample;
+          sum = sum + 1;// current_sample;
           sqr_sum = sqr_sum + current_sample * current_sample;
         }              
         nsample = nsample + n_current_sample;
@@ -51,7 +51,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         double true_diff = 0.0;
         for (int i=0; i < n; i++) {
           true_sum = true_sum + xCol[row_idx[i]] * r[i];
-          true_diff = true_diff +xCol[row_idx[i]] * r_diff[i];
+          true_diff = true_diff + 1;//xCol[row_idx[i]] * r_diff[i];
         }
         double true_z = (true_sum - center[jj] * sumResid) / (scale[jj] * n);
         Rprintf("%d: %f %f %f var %.4e current %.4e scaled %.4e__ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], variance, variance/nsample, start_pos[j]);
