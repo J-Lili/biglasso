@@ -64,6 +64,17 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       }        
       
       else {
+        double true_sum = 0.0;
+        for (int i=0; i < n; i++) {
+          true_sum = true_sum + xCol[row_idx[i]] * r[i];
+        }
+        double true_z = (true_sum - center[jj] * sumResid) / (scale[jj] * n);
+        if (fabs(true_z - a[j] * l2) > l1) {
+          Rprintf("%d: %f %f %f %f __ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], start_pos[j]);
+        }
+        
+        
+        
         steps++;
         stepsum += nsample;
       }
