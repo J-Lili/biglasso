@@ -11,7 +11,34 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
                          int *row_idx, vector<int> &col_idx,
                          NumericVector &center, NumericVector &scale, double *a,
                          double lambda, double sumResid, double alpha, 
-                         double *r, double *m, int n, int p);
+                         double *r, double *m, int n, int p,
+                         int &steps, int &stepsum,
+                         double *r_diff) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1, l2;
+  int j, jj, violations = 0;
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (e1[j] == 0 && e2[j] == 1) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
+        e1[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
 
 int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                        int *row_idx, vector<int> &col_idx,
@@ -111,6 +138,12 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
     s[i] = y[i] - ybar;
     eta[i] = a0;
   }
+  
+  
+  // for hypothesis testing
+  int steps = 0, stepsum = 0;
+  double *r_diff = Calloc(n, double);
+  
   thresh = eps * nullDev / n;
   
   double sumS = sum(s, n); // temp result sum of s
@@ -264,7 +297,13 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
+        
+        for  (int j = 0; j < n; j++) r_diff[j] = r[j]; 
+        
+        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p, steps, stepsum, r_diff);
+        
+        for  (int j = 0; j < n; j++) r_diff[j] = -r[j]; 
+        
         if (violations==0) break;
       }
       // Scan for violations in rest
