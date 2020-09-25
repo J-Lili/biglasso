@@ -11,6 +11,12 @@ extern SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                    SEXP ncore_, SEXP warn_, SEXP verbose_);
 
+extern SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_, 
+                               SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
+                               SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
+                               SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                               SEXP ncore_, SEXP warn_, SEXP verbose_);
+
 extern SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_, 
                                       SEXP lambda_, SEXP nlambda_,
                                       SEXP lambda_min_, SEXP alpha_, 
@@ -161,6 +167,7 @@ extern SEXP cdfit_gaussian_hsr_bedpp_nac(SEXP X_, SEXP y_, SEXP row_idx_,
 extern SEXP biglasso_get_eta(SEXP xPSEXP, SEXP row_idx_SEXP, SEXP betaSEXP, SEXP idx_pSEXP, SEXP idx_lSEXP);
 
 static R_CallMethodDef callMethods[] = {
+  {"cdfit_binomial_hsr_turbo", (DL_FUNC) &cdfit_binomial_hsr_turbo, 16},
   {"cdfit_binomial_hsr", (DL_FUNC) &cdfit_binomial_hsr, 16},
   {"cdfit_binomial_hsr_approx", (DL_FUNC) &cdfit_binomial_hsr_approx, 15},
   {"cdfit_binomial_hsr_slores", (DL_FUNC) &cdfit_binomial_hsr_slores, 19},
