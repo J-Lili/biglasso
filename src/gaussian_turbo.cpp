@@ -71,6 +71,15 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         }
         Rprintf("\n");
         
+        for (int startpos = 0; startpos < n-n_current_sample; startpos+=n_current_sample) {
+          sum = 0.0;
+          for (int i = startpos; i < startpos + n_current_sample; i++) {
+            sum = sum + r_diff[i % n];
+          }       
+          Rprintf("%.4e  ",sum);
+        }
+        Rprintf("\n");
+        
         
         if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.0001)) {
           Rprintf("accepted\n");
