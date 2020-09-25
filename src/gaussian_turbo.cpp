@@ -60,6 +60,18 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         Rprintf("%d: %f %f %f var %.4e current %.4e scaled %.4e__ %d\n",j,true_z - a[j] * l2, z[j] - a[j] * l2, l1, var[j], variance, variance/nsample, start_pos[j]);
         Rprintf("diff est true %f %f %f __ cumulative est true %f %f\n", sum*n/nsample, true_diff, sum, sum_prev[j], true_sum);
         Rprintf("variance %.4e\n", true_variance);
+        
+        for (int startpos = 0; startpos < n-n_current_sample; startpos+=n_current_sample) {
+          sum = 0.0;
+          for (int i = startpos; i < startpos + n_current_sample; i++) {
+            double current_sample = xCol[row_idx[i % n]] * r_diff[i % n];
+            sum = sum + current_sample;
+          }       
+          Rprintf("%.4e  ",sum);
+        }
+        Rprintf("\n");
+        
+        
         if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.0001)) {
           Rprintf("accepted\n");
         }
