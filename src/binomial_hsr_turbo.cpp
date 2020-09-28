@@ -54,6 +54,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
           sum = sum + xCol[row_idx[i]] * r[i];
         }
         if (sum!=sum_prev[j]) Rprintf("problem: %f %f\n",sum, sum_prev[j]);
+        else Rprintf("ok\n");
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         sum_prev[j] = sum;
