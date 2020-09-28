@@ -20,7 +20,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
   double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  int nsample = n;
+  int nsample = n / 10;
   
 #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -44,21 +44,13 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       sum_prev[j] += sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       var[j] += variance / nsample / (scale[jj] * scale[jj]);
-      // Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
-      if (j==28 || newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
+      if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
         steps++;
         stepsum += n;
         sum = 0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (j==28) {
-          Rprintf("rs %f %f -- %f %f\n", r_diff[1], r[1],r_diff[2], r[2]);
-          if (newly_entered[j]) Rprintf("new %f %d\n",sum, j);
-          else if (sum!=sum_prev[j]) Rprintf("problem: %f %f %d, %d\n",sum, sum_prev[j], start_pos[j], j);
-          else Rprintf("ok\n");
-        }
-        
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         sum_prev[j] = sum;
@@ -342,18 +334,13 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         // Scan for violations in strong set
         sumS = sum(s, n);
         
-        Rprintf("r_out 0 %f %f -- %f %f\n",r_diff[0], s[0],r_diff[1], s[1]);
         for  (int j = 0; j < n; j++) r_diff[j] += s[j]; 
-        Rprintf("r_out 1 %f %f -- %f %f\n",r_diff[0], s[0],r_diff[1], s[1]);
         violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p, 
                                           steps, stepsum, r_diff,
                                           sum_prev, var, start_pos,
                                           newly_entered);
-        Rprintf("r_out 2 %f %f -- %f %f\n",r_diff[0], s[0],r_diff[1], s[1]);
-        
+
         for  (int j = 0; j < n; j++) r_diff[j] = -s[j]; 
-        
-        Rprintf("r_out 3 %f %f -- %f %f\n",r_diff[0], s[0],r_diff[1], s[1]);
         
         if (violations==0) break;
       }
