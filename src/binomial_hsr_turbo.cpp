@@ -43,8 +43,8 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       sum_prev[j] += sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       var[j] += variance / nsample / (scale[jj] * scale[jj]);
-      
-      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.0001)) {
+      Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
+      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
         steps++;
         stepsum += n;
         sum = 0;
