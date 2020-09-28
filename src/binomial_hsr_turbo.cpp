@@ -46,19 +46,20 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       var[j] += variance / nsample / (scale[jj] * scale[jj]);
       // Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
       if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
-        newly_entered[j] = false;
         steps++;
         stepsum += n;
         sum = 0;
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (sum!=sum_prev[j]) Rprintf("problem: %f %f %d, %d\n",sum, sum_prev[j], start_pos[j], j);
+        if (newly_entered[j]) Rprintf("new\n");
+        else if (sum!=sum_prev[j]) Rprintf("problem: %f %f %d, %d\n",sum, sum_prev[j], start_pos[j], j);
         else Rprintf("ok\n");
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         sum_prev[j] = sum;
-        
+        newly_entered[j] = false;
+
         if (fabs(z[j] - a[j] * l2) > l1) {
           e1[j] = 1;
           violations++;
