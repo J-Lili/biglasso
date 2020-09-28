@@ -61,7 +61,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         Rprintf("diff est true %f %f %f __ cumulative est true %f %f\n", sum*n/nsample, true_diff, sum, sum_prev[j], true_sum);
         Rprintf("variance %.4e\n", true_variance);
         
-        for (int startpos = 0; startpos < n-n_current_sample; startpos+=n_current_sample) {
+        for (int startpos = 0; startpos <= n-n_current_sample; startpos+=n_current_sample) {
           sum = 0.0;
           for (int i = startpos; i < startpos + n_current_sample; i++) {
             double current_sample = xCol[row_idx[i % n]] * r_diff[i % n];
@@ -71,7 +71,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         }
         Rprintf("\n");
         
-        for (int startpos = 0; startpos < n-n_current_sample; startpos+=n_current_sample) {
+        for (int startpos = 0; startpos <= n-n_current_sample; startpos+=n_current_sample) {
           sum = 0.0;
           for (int i = startpos; i < startpos + n_current_sample; i++) {
             sum = sum + abs(r_diff[i % n]);
@@ -80,7 +80,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         }
         Rprintf("\n");
         
-        for (int startpos = 0; startpos < n-n_current_sample; startpos+=n_current_sample) {
+        for (int startpos = 0; startpos <= n-n_current_sample; startpos+=n_current_sample) {
           sum = 0.0;
           for (int i = startpos; i < startpos + n_current_sample; i++) {
             sum = sum + abs(xCol[row_idx[i % n]]);
