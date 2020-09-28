@@ -46,7 +46,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       var[j] += variance / nsample / (scale[jj] * scale[jj]);
       // Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
       if (newly_entered[j] || is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
-        newly_entered[j] = true;
+        newly_entered[j] = false;
         steps++;
         stepsum += n;
         sum = 0;
