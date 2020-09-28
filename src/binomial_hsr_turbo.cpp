@@ -345,6 +345,7 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
       if (violations==0) break;
     }
   }
+  Rprintf("Steps: %f\n",(double)stepsum/steps,(double)stepsum/steps/n);
   Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
   
