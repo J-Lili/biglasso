@@ -19,7 +19,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
   double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-  int nsample = n / 10;
+  int nsample = n;
   
 #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -43,7 +43,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       sum_prev[j] += sum * n / nsample;
       z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
       var[j] += variance / nsample / (scale[jj] * scale[jj]);
-      Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
+      // Rprintf("%f %f %f\n",l1,  (z[j]-a[j] * l2), sqrt(var[j]));
       if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.001)) {
         steps++;
         stepsum += n;
@@ -51,6 +51,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
+        if (sum!=sum_prev[j]) Rprintf("problem: %f %f\n",sum, sum_prev[j]);
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
         sum_prev[j] = sum;
