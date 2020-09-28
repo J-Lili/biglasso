@@ -342,14 +342,18 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         // Scan for violations in strong set
         sumS = sum(s, n);
         
+        Rprintf("r_out 0 %f %f -- %f %f\n",r_diff[0], r[0],r_diff[1], r[1]);
         for  (int j = 0; j < n; j++) r_diff[j] += r[j]; 
-        
+        Rprintf("r_out 1 %f %f -- %f %f\n",r_diff[0], r[0],r_diff[1], r[1]);
         violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p, 
                                           steps, stepsum, r_diff,
                                           sum_prev, var, start_pos,
                                           newly_entered);
+        Rprintf("r_out 2 %f %f -- %f %f\n",r_diff[0], r[0],r_diff[1], r[1]);
         
         for  (int j = 0; j < n; j++) r_diff[j] = -r[j]; 
+        
+        Rprintf("r_out 3 %f %f -- %f %f\n",r_diff[0], r[0],r_diff[1], r[1]);
         
         if (violations==0) break;
       }
