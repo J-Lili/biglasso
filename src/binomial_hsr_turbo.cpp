@@ -13,27 +13,56 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p,
                          int &steps, int &stepsum,
-                         double *r_diff) {
+                         double *r_diff,
+                         double *sum_prev, double *var, int *start_pos) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol, sum, sqr_sum, l1, l2;
   int j, jj, violations = 0;
   
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  int nsample = n / 10;
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations, steps, stepsum) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0 && e2[j] == 1) {
       jj = col_idx[j];
       xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        e1[j] = 1;
-        violations++;
+      
+      sum = sqr_sum = 0.0;
+      for (int i = start_pos[j]; i < start_pos[j] + nsample; i++) {
+        double current_sample = xCol[row_idx[i % n]] * r_diff[i % n];
+        sum = sum + current_sample;
+        sqr_sum = sqr_sum + current_sample * current_sample;
+      }              
+
+      double variance = sqr_sum / nsample - sum / nsample * sum / nsample;
+      start_pos[j] = (start_pos[j] + nsample) % n;   
+      
+      sum_prev[j] += sum * n / nsample;
+      z[j] = (sum_prev[j] - center[jj] * sumResid) / (scale[jj] * n);
+      var[j] += variance / nsample / (scale[jj] * scale[jj]);
+      
+      if (is_hypothesis_accepted(l1,  (z[j]-a[j] * l2), sqrt(var[j]) ,0.0001)) {
+        steps++;
+        stepsum += n;
+        sum = 0;
+        for (int i=0; i < n; i++) {
+          sum = sum + xCol[row_idx[i]] * r[i];
+        }
+        z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+        var[j] = 0;
+        sum_prev[j] = sum;
+        
+        if (fabs(z[j] - a[j] * l2) > l1) {
+          e1[j] = 1;
+          violations++;
+        }
+      }
+      else {
+        steps++;
+        stepsum += nsample;
       }
     }
   }
@@ -143,7 +172,10 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   // for hypothesis testing
   int steps = 0, stepsum = 0;
   double *r_diff = Calloc(n, double);
-  
+  double *sum_prev = Calloc(n, double);
+  double *var = Calloc(n, double);
+  int *start_pos = Calloc(n, int);
+
   thresh = eps * nullDev / n;
   
   double sumS = sum(s, n); // temp result sum of s
@@ -300,7 +332,9 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
         
         for  (int j = 0; j < n; j++) r_diff[j] = r[j]; 
         
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p, steps, stepsum, r_diff);
+        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p, 
+                                          steps, stepsum, r_diff,
+                                          sum_prev, var, start_pos);
         
         for  (int j = 0; j < n; j++) r_diff[j] = -r[j]; 
         
@@ -315,4 +349,3 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
   
 }
-
