@@ -181,10 +181,10 @@ RcppExport SEXP cdfit_binomial_hsr_turbo(SEXP X_, SEXP y_, SEXP row_idx_,
   // for hypothesis testing
   int steps = 0, stepsum = 0;
   double *r_diff = Calloc(n, double);
-  double *sum_prev = Calloc(n, double);
-  double *var = Calloc(n, double);
-  int *start_pos = Calloc(n, int);
-  bool *newly_entered = Calloc(n, bool);
+  double *sum_prev = Calloc(p, double);
+  double *var = Calloc(p, double);
+  int *start_pos = Calloc(p, int);
+  bool *newly_entered = Calloc(p, bool);
   
   thresh = eps * nullDev / n;
   
