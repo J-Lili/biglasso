@@ -53,7 +53,7 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
         for (int i=0; i < n; i++) {
           sum = sum + xCol[row_idx[i]] * r[i];
         }
-        if (sum!=sum_prev[j]) Rprintf("problem: %f %f\n",sum, sum_prev[j]);
+        if (sum!=sum_prev[j]) Rprintf("problem: %f %f %d, %d\n",sum, sum_prev[j], start_pos[j], j);
         else Rprintf("ok\n");
         z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
         var[j] = 0;
